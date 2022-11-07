@@ -23,6 +23,7 @@ fn main() {
 
     let scan_folder = fs::read_dir(&to_folder);
 
+    // move to file.rs
     let root: Vec<File> = match scan_folder {
         Ok(e) => {
             e
@@ -33,7 +34,9 @@ fn main() {
 
                 File {
                     file_name,
-                    is_folder
+                    is_folder,
+                    permissions: 0,// read file permission
+                    size: 0 // read file size
                 }
             }).collect()
         },

@@ -3,7 +3,9 @@ use colored::*;
 #[derive(Ord, PartialEq, PartialOrd, Eq, Clone)]
 pub struct File {
     pub file_name: String,
-    pub is_folder: bool
+    pub is_folder: bool,
+    pub permissions: u32,
+    pub size: u32
 }
 
 #[derive(Default)]
