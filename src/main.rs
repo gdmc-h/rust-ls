@@ -11,10 +11,10 @@ extern crate colored;
 mod file;
 mod path;
 
-use std::env;
+use std::{env, io::Error};
 use path::Path;
 
-fn main() {
+fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
     let default_path = String::from("./");
     let to_folder: &String = match args.get(1) { 
@@ -24,4 +24,6 @@ fn main() {
 
     let mut path = Path {..Default::default()};
     path.show_path(to_folder);
+
+    Ok(())
 }

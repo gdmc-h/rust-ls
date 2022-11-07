@@ -1,4 +1,4 @@
-use std::{fs::{DirEntry}, io::Error};
+use std::{fs::DirEntry, io::Error};
 
 #[derive(Ord, PartialEq, PartialOrd, Eq, Clone, Default)]
 pub struct File {

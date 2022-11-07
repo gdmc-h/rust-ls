@@ -9,7 +9,6 @@ pub struct Path {
     pub files: Vec<File>
 }
 
-
 impl Path {
     fn set_files<T, A>(&mut self, files: Vec<File>, filter_condition_folder: T, filter_condition_file: A)
     where T: Fn(&&File) -> bool,
