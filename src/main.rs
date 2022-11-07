@@ -10,35 +10,39 @@ extern crate colored;
 
 mod file;
 
-use file::{File, get_files, sort_files, print_files};
-use std::{fs, rc::Rc, env};
+use file::{File, Path};
+use std::{fs, env, process};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     let default_path = String::from("./");
-    let to_folder = args.get(1).unwrap_or(&default_path);
+    let to_folder: &String = match args.get(1) { 
+        Some(e) => e,
+        None => &default_path
+    };
 
-    let root: Rc<Vec<File>> = Rc::new(
-        // TODO: read_dir should get path from argv
-        fs::read_dir(&to_folder).unwrap().map(|p| {
-            let res = p.unwrap();
-            let file_name = String::from(res.file_name().to_str().unwrap());
-            let is_folder = res.file_type().unwrap().is_dir();
+    let scan_folder = fs::read_dir(&to_folder);
 
-            File {
-                file_name,
-                is_folder
-            }
-        }).into_iter().collect()
-    );
+    let root: Vec<File> = match scan_folder {
+        Ok(e) => {
+            e
+            .map(|p| {
+                let res = p.unwrap();
+                let file_name = String::from(res.file_name().to_str().unwrap());
+                let is_folder = res.file_type().unwrap().is_dir();
 
-    // should probably be refactored to be more flexible
-    let folders: Vec<File> = get_files(root.clone(), |p| p.is_folder);
-    let files: Vec<File> = get_files(root, |p| !p.is_folder);
+                File {
+                    file_name,
+                    is_folder
+                }
+            }).collect()
+        },
+        Err(_) => {
+            println!("Path {} does not exist", &to_folder);
+            process::exit(0);
+        }
+    };
 
-    let sorted_folders = sort_files(folders);
-    let sorted_files = sort_files(files);
-
-    print_files(sorted_folders);
-    print_files(sorted_files);
+    let mut path = Path {..Default::default()};
+    path.show_path(&root);
 }
