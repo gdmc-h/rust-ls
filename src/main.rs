@@ -9,9 +9,10 @@
 extern crate colored;
 
 mod file;
+mod path;
 
-use file::{File, Path};
-use std::{fs, env, process};
+use std::env;
+use path::Path;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -21,31 +22,6 @@ fn main() {
         None => &default_path
     };
 
-    let scan_folder = fs::read_dir(&to_folder);
-
-    // move to file.rs
-    let root: Vec<File> = match scan_folder {
-        Ok(e) => {
-            e
-            .map(|p| {
-                let res = p.unwrap();
-                let file_name = String::from(res.file_name().to_str().unwrap());
-                let is_folder = res.file_type().unwrap().is_dir();
-
-                File {
-                    file_name,
-                    is_folder,
-                    permissions: 0,// read file permission
-                    size: 0 // read file size
-                }
-            }).collect()
-        },
-        Err(_) => {
-            println!("Path {} does not exist", &to_folder);
-            process::exit(0);
-        }
-    };
-
     let mut path = Path {..Default::default()};
-    path.show_path(&root);
+    path.show_path(to_folder);
 }
