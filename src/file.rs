@@ -1,50 +1,58 @@
-use colored::*;
+use std::{fs::DirEntry, io::Error, os::unix::prelude::PermissionsExt};
 
-#[derive(Ord, PartialEq, PartialOrd, Eq, Clone)]
+#[derive(Ord, PartialEq, PartialOrd, Eq, Clone, Default)]
 pub struct File {
     pub file_name: String,
-    pub is_folder: bool
+    pub is_folder: bool,
+    pub permissions: String,
+    pub size: String
 }
 
-#[derive(Default)]
-pub struct Path {
-    pub folders: Vec<File>,
-    pub files: Vec<File>
-}
+impl File {
+    fn get_size(size: u64) -> String {
+        let f64_size = f64::from(size as u32);
 
-
-impl Path {
-    fn set_files<T, A>(&mut self, files: &[File], filter_condition_folder: T, filter_condition_file: A)
-    where T: Fn(&&File) -> bool,
-          A: Fn(&&File) -> bool { // there's probably a better solution to this C-c/C-v
-        self.files = files.iter().filter(filter_condition_file).cloned().collect();
-        self.folders = files.iter().filter(filter_condition_folder).cloned().collect();
+        (f64_size / 10000.0).to_string()
     }
 
-    fn sort_files(&mut self) {
-        self.files.sort_by(|a, b| a.file_name.cmp(&b.file_name));
-        self.folders.sort_by(|a, b| a.file_name.cmp(&b.file_name));
+    fn get_permissions(mode: u32) -> String {
+        let full_metadata_mode = format!("{:o}", mode);
+        let chars_to_show = full_metadata_mode.len()-3;
+
+        full_metadata_mode[chars_to_show..].to_string()
     }
 
-    fn print_files(&self) {
-        let print_it = |file: &File| {
-            if file.is_folder {
-                println!("{}", file.file_name.color("blue"))
-            } else {
-                println!("{}", file.file_name.color("white"))
+    pub fn fetch_file(dir: Result<DirEntry, Error>) -> Self {
+        let unwrap_dir: DirEntry = match dir {
+            Ok(ok) => ok,
+            Err(e) => {
+                panic!("{}", e);
             }
         };
+        let file_name = String::from(
+            match unwrap_dir.file_name().to_str() {
+                Some(name) => name,
+                None => panic!("Panic: this was not supposed to happen")
+            }
+        );
+        let is_folder = match unwrap_dir.file_type() {
+            Ok(file) => file.is_dir(),
+            Err(e) => panic!("{}", e)
+        };
 
-        self.folders.iter().for_each(print_it);
-        self.files.iter().for_each(print_it);
-    }
+        let file_metadata = match unwrap_dir.metadata() {
+            Ok(metadata) => metadata,
+            Err(e) => panic!("{}", e)
+        };
 
-    pub fn show_path(&mut self, files: &[File]) {
-        self.set_files(files, |p| p.is_folder, |a| !a.is_folder);
-        self.sort_files();
-        self.print_files();
+        let permissions = File::get_permissions(file_metadata.permissions().mode());
+        let size = File::get_size(file_metadata.len());
+
+        Self {
+            file_name,
+            is_folder,
+            permissions,
+            size 
+        }
     }
 }
-
-
-
