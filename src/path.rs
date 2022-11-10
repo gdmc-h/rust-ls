@@ -6,13 +6,15 @@ use crate::file::File;
 #[derive(Default)]
 pub struct Path {
     pub folders: Vec<File>,
-    pub files: Vec<File>
+    pub files: Vec<File>,
+    pub root: Vec<File>
 }
 
 impl Path {
     fn set_files<T, A>(&mut self, files: Vec<File>, filter_condition_folder: T, filter_condition_file: A)
     where T: Fn(&&File) -> bool,
           A: Fn(&&File) -> bool { // there's probably a better solution to this C-c/C-v
+        self.root = files.clone();
         self.files = files.iter().filter(filter_condition_file).cloned().collect();
         self.folders = files.iter().filter(filter_condition_folder).cloned().collect();
     }
@@ -23,16 +25,35 @@ impl Path {
     }
 
     fn print_files(&self) {
-        let print_it = |file: &File| {
+        let format_string = |file: &File| {
+            let tab_size = self.root.clone().into_iter().fold(0, |a, b| {
+                if b.file_name.len() > a {
+                    b.file_name.len()
+                } else {
+                    a
+                }
+            });
+            let tab = (0..tab_size - file.file_name.len()).map(|_| " ").collect::<String>();
+            let print_file = |color: &str| {
+                println!(
+                    "{} {}\t{} {}mb", 
+                    file.file_name.color(color),
+                    tab,
+                    file.permissions,
+                    file.size
+                );
+            };
+
             if file.is_folder {
-                println!("{}", file.file_name.color("blue"))
+                print_file("blue");
             } else {
-                println!("{}", file.file_name.color("white"))
+                print_file("white");
             }
         };
 
-        self.folders.iter().for_each(print_it);
-        self.files.iter().for_each(print_it);
+
+        self.folders.iter().for_each(format_string);
+        self.files.iter().for_each(format_string);
     }
 
     fn scan_folder(&self, path: &str) -> Vec<File> {
